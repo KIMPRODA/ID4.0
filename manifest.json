@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "redmine helper for cmjc",
+  "version": "0.0.1",
+  "content_scripts": [
+    {
+      "matches": ["http://works.ildong.com/*"],
+      "js": ["content.js"]
+    }
+  ],  
+  "action": {
+    "default_icon": {
+      "16": "images/icon.png",
+      "24": "images/icon.png",
+      "32": "images/icon.png"
+    },
+    "default_title": "Users",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "scripting",    
+    "declarativeContent",
+    "storage"
+  ],
+  "host_permissions": ["http://works.ildong.com/"]  
+}

@@ -1,0 +1,20 @@
+/*기본태그 정의*/
+html, body{padding:0;margin:0; letter-spacing:-0.25px; word-break:keep-all;}
+button { background:none; padding:0; border:none; cursor: pointer; outline: none;}
+div, pre, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, address, dl, dt, dd, ol, ul, li, fieldset, form, legend, table, caption, tbody, tfoot, thead, tr, th, td, input, select, textarea { margin:0; padding:0; }
+
+/* usersWrap */
+#usersWrap{max-width:330px;min-height:100px;padding:10px;font-size:14px;}
+#usersWrap .listW{border-bottom:2px solid #363839;}
+#usersWrap .listW > ul > li{padding: 10px 15px;position:relative; cursor: pointer;}
+#usersWrap .listW > ul > li span{position:absolute;top:50%;right: 0;transform: translate(-50%, -50%);}
+#usersWrap .listW > ul > li span button {width:20px;height:20px;}
+#usersWrap .listW > ul > li span i{color:#989da2;}
+#usersWrap .listW > ul > li:hover{color:#4f7497;font-weight:bold;}
+#usersWrap .listW > ul > li:hover span button i{color:#363839;}
+#usersWrap .listW > ul > li:nth-child(2n+1){background: #ebeef0;}
+#usersWrap .btnArea{display:flex;gap: 2px;background: #ebeef0;padding:10px;}
+#usersWrap .btnArea input, #usersWrap .btnArea button{height:35px;border-radius: 3px;}
+#usersWrap .btnArea #ipt_username{width: 140px;border: 1px solid #989da2;padding:0 10px;height:33px;}
+#usersWrap .btnArea button#btn_add{background: #628DB6;border: 1px solid #4f7497;width: 70px;color:#fff;}
+#usersWrap .btnArea button#btn_remove{background: #363839;width: 90px;color:#fff;}
