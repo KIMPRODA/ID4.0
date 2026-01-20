@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>주행거리 및 유류비 계산기 (다중 경유지)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: #3EBBF0; padding: 20px; text-align: center; }
+        .header h1 { color: white; font-size: 24px; }
+        .content { display: flex; }
+        .sidebar { width: 400px; padding: 20px; border-right: 1px solid #ddd; max-height: 800px; overflow-y: auto; }
+        .map-area { flex: 1; position: relative; }
+        #map { width: 100%; height: 800px; }
+        .waypoint-group { margin-bottom: 10px; }
+        .waypoint-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
+        .waypoint-item input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; }
+        .waypoint-item button { padding: 8px 12px; background: #ff5252; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .waypoint-item button:hover { background: #ff1744; }
+        .waypoint-label { font-size: 12px; color: #666; font-weight: bold; min-width: 50px; }
+        .btn { width: 100%; padding: 12px; background: #3EBBF0; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; color: white; }
+        .btn:hover { background: #2BA5D8; }
+        .btn-add { background: #4CAF50; margin-top: 5px; padding: 8px; font-size: 14px; }
+        .btn-add:hover { background: #45a049; }
+        .result { margin-top: 20px; padding: 15px; background: #f9f9f9; border-radius: 5px; display: none; }
+        .result h3 { margin-bottom: 10px; color: #333; font-size: 16px; }
+        .route-detail { margin-bottom: 15px; padding: 10px; background: white; border-radius: 5px; border-left: 3px solid #3EBBF0; }
+        .route-detail-title { font-weight: bold; color: #333; margin-bottom: 5px; font-size: 13px; }
+        .route-detail-info { font-size: 12px; color: #666; }
+        .total-summary { background: #3EBBF0; color: white; padding: 15px; border-radius: 5px; margin-top: 10px; }
+        .total-summary-item { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; }
+        .total-summary-item:last-child { font-size: 18px; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚗 주행거리 및 유류비 계산기 (다중 경유지)</h1>
+        </div>
+        <div class="content">
+            <div class="sidebar">
+                <div class="waypoint-group">
+                    <div class="waypoint-item">
+                        <span class="waypoint-label">출발지</span>
+                        <input type="text" id="start" placeholder="예: 서울시청">
+                    </div>
+                </div>
+                
+                <div id="waypointContainer"></div>
+                
+                <div class="waypoint-group">
+                    <div class="waypoint-item">
+                        <span class="waypoint-label">도착지</span>
+                        <input type="text" id="end" placeholder="예: 강남역">
+                    </div>
+                </div>
+                
+                <button class="btn btn-add" onclick="addWaypoint()">+ 경유지 추가</button>
+                <button class="btn" onclick="calculateRoute()">경로 계산하기</button>
+                
+                <div class="result" id="result">
+                    <h3>📍 구간별 상세 정보</h3>
+                    <div id="routeDetails"></div>
+                    
+                    <div class="total-summary">
+                        <div class="total-summary-item">
+                            <span>총 거리</span>
+                            <span id="totalDistance">-</span>
+                        </div>
+                        <div class="total-summary-item">
+                            <span>총 시간</span>
+                            <span id="totalDuration">-</span>
+                        </div>
+                        <div class="total-summary-item">
+                            <span>총 유류비</span>
+                            <span id="totalFuelCost">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="map-area">
+                <div id="map"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=d0e05c19357dec8968351b33abbb4f34"></script>
+    <script>
+        const API_KEY = 'd94166660f1d5b2b0669f82303f82cb6';
+        const PRICE_PER_KM = 172;
+        
+        var map;
+        var markers = [];
+        var polylines = [];
+        var waypointCount = 0;
+        
+        window.onload = function() {
+            var container = document.getElementById('map');
+            var options = {
+                center: new kakao.maps.LatLng(37.5665, 126.9780),
+                level: 8
+            };
+            map = new kakao.maps.Map(container, options);
+        };
+        
+        function addWaypoint() {
+            if (waypointCount >= 10) {
+                alert('경유지는 최대 10개까지 추가할 수 있습니다.');
+                return;
+            }
+            
+            waypointCount++;
+            const container = document.getElementById('waypointContainer');
+            const div = document.createElement('div');
+            div.className = 'waypoint-group';
+            div.id = `waypoint-${waypointCount}`;
+            div.innerHTML = `
+                <div class="waypoint-item">
+                    <span class="waypoint-label">경유지${waypointCount}</span>
+                    <input type="text" class="waypoint-input" placeholder="경유지 주소 입력">
+                    <button onclick="removeWaypoint(${waypointCount})">삭제</button>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+        
+        function removeWaypoint(id) {
+            const element = document.getElementById(`waypoint-${id}`);
+            if (element) {
+                element.remove();
+            }
+        }
+        
+        async function calculateRoute() {
+            const startAddr = document.getElementById('start').value.trim();
+            const endAddr = document.getElementById('end').value.trim();
+            
+            if (!startAddr || !endAddr) {
+                alert('출발지와 도착지를 입력해주세요.');
+                return;
+            }
+            
+            // 경유지 수집
+            const waypointInputs = document.querySelectorAll('.waypoint-input');
+            const waypoints = [];
+            for (let input of waypointInputs) {
+                if (input.value.trim()) {
+                    waypoints.push(input.value.trim());
+                }
+            }
+            
+            // 전체 경로 생성
+            const allPoints = [startAddr, ...waypoints, endAddr];
+            
+            try {
+                // 기존 마커/선 제거
+                clearMap();
+                
+                // 좌표 변환
+                const coords = [];
+                for (let addr of allPoints) {
+                    const coord = await getCoordinates(addr);
+                    coords.push({ address: addr, ...coord });
+                }
+                
+                // 구간별 경로 계산
+                const routes = [];
+                let totalDistance = 0;
+                let totalDuration = 0;
+                
+                for (let i = 0; i < coords.length - 1; i++) {
+                    const routeData = await getRoute(coords[i], coords[i + 1]);
+                    const distance = routeData.summary.distance / 1000;
+                    const duration = routeData.summary.duration / 60;
+                    const fuelCost = Math.floor(distance * PRICE_PER_KM / 10) * 10;
+                    
+                    routes.push({
+                        from: coords[i].address,
+                        to: coords[i + 1].address,
+                        distance: distance.toFixed(2),
+                        duration: Math.round(duration),
+                        fuelCost: fuelCost,
+                        routeData: routeData
+                    });
+                    
+                    totalDistance += distance;
+                    totalDuration += duration;
+                }
+                
+                const totalFuelCost = Math.floor(totalDistance * PRICE_PER_KM / 10) * 10;
+                
+                // 지도에 표시
+                displayRoutes(coords, routes);
+                
+                // 결과 표시
+                displayResults(routes, totalDistance, totalDuration, totalFuelCost);
+                
+            } catch (error) {
+                alert('오류: ' + error.message);
+            }
+        }
+        
+        function clearMap() {
+            markers.forEach(marker => marker.setMap(null));
+            polylines.forEach(polyline => polyline.setMap(null));
+            markers = [];
+            polylines = [];
+        }
+        
+        async function getCoordinates(address) {
+            let url = `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(address)}`;
+            let response = await fetch(url, {
+                headers: { 'Authorization': `KakaoAK ${API_KEY}` }
+            });
+            let data = await response.json();
+            
+            if (data.documents && data.documents.length > 0) {
+                return { 
+                    x: parseFloat(data.documents[0].x), 
+                    y: parseFloat(data.documents[0].y) 
+                };
+            }
+            
+            url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(address)}`;
+            response = await fetch(url, {
+                headers: { 'Authorization': `KakaoAK ${API_KEY}` }
+            });
+            data = await response.json();
+            
+            if (data.documents && data.documents.length > 0) {
+                return { 
+                    x: parseFloat(data.documents[0].x), 
+                    y: parseFloat(data.documents[0].y) 
+                };
+            }
+            
+            throw new Error('주소를 찾을 수 없습니다: ' + address);
+        }
+        
+        async function getRoute(start, end) {
+            const url = `https://apis-navi.kakaomobility.com/v1/directions?origin=${start.x},${start.y}&destination=${end.x},${end.y}`;
+            
+            const response = await fetch(url, {
+                headers: { 'Authorization': `KakaoAK ${API_KEY}` }
+            });
+            
+            const data = await response.json();
+            
+            if (!data.routes || data.routes.length === 0) {
+                throw new Error('경로를 찾을 수 없습니다.');
+            }
+            
+            return data.routes[0];
+        }
+        
+        function displayRoutes(coords, routes) {
+            const bounds = new kakao.maps.LatLngBounds();
+            
+            // 마커 표시
+            coords.forEach((coord, index) => {
+                const position = new kakao.maps.LatLng(coord.y, coord.x);
+                const marker = new kakao.maps.Marker({
+                    position: position,
+                    map: map,
+                    label: index === 0 ? '출발' : index === coords.length - 1 ? '도착' : `${index}`
+                });
+                markers.push(marker);
+                bounds.extend(position);
+            });
+            
+            // 경로 선 그리기
+            routes.forEach(route => {
+                const path = [];
+                route.routeData.sections[0].roads.forEach(road => {
+                    for (let i = 0; i < road.vertexes.length; i += 2) {
+                        path.push(new kakao.maps.LatLng(
+                            road.vertexes[i + 1],
+                            road.vertexes[i]
+                        ));
+                    }
+                });
+                
+                const polyline = new kakao.maps.Polyline({
+                    path: path,
+                    strokeWeight: 5,
+                    strokeColor: '#FF0000',
+                    strokeOpacity: 0.7,
+                    strokeStyle: 'solid'
+                });
+                polyline.setMap(map);
+                polylines.push(polyline);
+            });
+            
+            map.setBounds(bounds);
+        }
+        
+        function displayResults(routes, totalDistance, totalDuration, totalFuelCost) {
+            let detailsHtml = '';
+            routes.forEach((route, index) => {
+                detailsHtml += `
+                    <div class="route-detail">
+                        <div class="route-detail-title">구간 ${index + 1}: ${route.from} → ${route.to}</div>
+                        <div class="route-detail-info">
+                            거리: ${route.distance}km | 시간: ${route.duration}분 | 유류비: ${route.fuelCost.toLocaleString()}원
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('routeDetails').innerHTML = detailsHtml;
+            document.getElementById('totalDistance').textContent = `${totalDistance.toFixed(2)}km`;
+            document.getElementById('totalDuration').textContent = `${Math.round(totalDuration)}분`;
+            document.getElementById('totalFuelCost').textContent = `${totalFuelCost.toLocaleString()}원`;
+            document.getElementById('result').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
