@@ -98,18 +98,14 @@
         var waypointCount = 0;
         
         // 카카오맵 SDK 로딩 대기
-        function initMap() {
-            if (typeof kakao === 'undefined' || !kakao.maps) {
-                setTimeout(initMap, 100);
-                return;
-            }
-            var container = document.getElementById('map');
-            var options = {
-                center: new kakao.maps.LatLng(37.5665, 126.9780),
-                level: 8
-            };
-            map = new kakao.maps.Map(container, options);
-        }
+window.onload = function() {
+    var container = document.getElementById('map');
+    var options = {
+        center: new kakao.maps.LatLng(37.5665, 126.9780),
+        level: 8
+    };
+    map = new kakao.maps.Map(container, options);
+};
         
         function addWaypoint() {
             if (waypointCount >= 10) {
@@ -268,10 +264,9 @@
             coords.forEach((coord, index) => {
                 const position = new kakao.maps.LatLng(coord.y, coord.x);
                 const marker = new kakao.maps.Marker({
-                    position: position,
-                    map: map,
-                    label: index === 0 ? '출발' : index === coords.length - 1 ? '도착' : `${index}`
-                });
+                      position: position,
+                           map: map
+            });
                 markers.push(marker);
                 bounds.extend(position);
             });
