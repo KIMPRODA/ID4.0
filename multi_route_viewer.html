@@ -8,8 +8,17 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; background: #f5f5f5; }
         .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden; }
-        .header { background: #3EBBF0; padding: 20px; text-align: center; }
+        .header { background: #3EBBF0; padding: 20px; text-align: center; position: relative; }
         .header h1 { color: white; font-size: 24px; }
+        .header .logo { 
+        position: absolute; 
+        left: 20px; 
+        top: 50%; 
+        transform: translateY(-50%); 
+        color: white; 
+        font-size: 18px; 
+        font-weight: bold; }
+
         .content { display: flex; }
         .sidebar { width: 400px; padding: 20px; border-right: 1px solid #ddd; max-height: 800px; overflow-y: auto; }
         .map-area { flex: 1; position: relative; }
@@ -37,6 +46,7 @@
 <body>
     <div class="container">
         <div class="header">
+            <div class="logo">ILDONG</div>
             <h1>🚗 주행거리 및 유류비 계산기 (다중 경유지)</h1>
         </div>
         <div class="content">
