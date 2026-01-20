@@ -86,7 +86,18 @@
         </div>
     </div>
 
-    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=d0e05c19357dec8968351b33abbb4f34"></script>
+<script>
+(function() {
+    var script = document.createElement('script');
+    script.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=d0e05c19357dec8968351b33abbb4f34';
+    script.onload = function() {
+        initMap();
+    };
+    document.head.appendChild(script);
+})();
+</script>
+
+    
     <script>
         const API_KEY = 'd94166660f1d5b2b0669f82303f82cb6';
         const PRICE_PER_KM = 172;
@@ -108,12 +119,6 @@
                 level: 8
             };
             map = new kakao.maps.Map(container, options);
-        }
-        
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initMap);
-        } else {
-            initMap();
         }
         
         function addWaypoint() {
