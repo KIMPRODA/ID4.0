@@ -86,7 +86,7 @@
         </div>
     </div>
 
-    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=2d6e24046010efdbfa9c002db0863a61"></script>
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=2d6e24046010efdbfa9c002db0863a61&autoload=false"></script>
     
     <script>
         const API_KEY = 'd94166660f1d5b2b0669f82303f82cb6';
@@ -98,14 +98,16 @@
         var waypointCount = 0;
         
         // 카카오맵 SDK 로딩 대기
-window.onload = function() {
+
+        kakao.maps.load(function() {
     var container = document.getElementById('map');
     var options = {
         center: new kakao.maps.LatLng(37.5665, 126.9780),
         level: 8
     };
     map = new kakao.maps.Map(container, options);
-};
+    });
+
         
         function addWaypoint() {
             if (waypointCount >= 10) {
