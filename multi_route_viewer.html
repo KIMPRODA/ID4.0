@@ -95,14 +95,25 @@
         var polylines = [];
         var waypointCount = 0;
         
-        window.onload = function() {
+        // 카카오맵 SDK 로딩 대기
+        function initMap() {
+            if (typeof kakao === 'undefined' || !kakao.maps) {
+                setTimeout(initMap, 100);
+                return;
+            }
             var container = document.getElementById('map');
             var options = {
                 center: new kakao.maps.LatLng(37.5665, 126.9780),
                 level: 8
             };
             map = new kakao.maps.Map(container, options);
-        };
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initMap);
+        } else {
+            initMap();
+        }
         
         function addWaypoint() {
             if (waypointCount >= 10) {
